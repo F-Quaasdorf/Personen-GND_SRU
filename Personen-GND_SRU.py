@@ -46,7 +46,8 @@ def dnb_sru(query):
     
     return records
 
-# Parse the records and returns a dictionary of the fetched fields and elements (e.g. publication year)
+
+# Parse the records and returns a dictionary of the fetched fields and elements
 def parse_record(record):
     ns = {"marc": "http://www.loc.gov/MARC21/slim"}
     xml = etree.fromstring(unicodedata.normalize("NFC", str(record)))
@@ -78,10 +79,12 @@ def parse_record(record):
         
         return meta_dict
 
+
 def to_df(records):
     raw_df = pd.DataFrame(records)
     
     return raw_df
+
 
 def refine_df(raw_df):
     def concat_column_data(row, data_column, label_column):
@@ -134,9 +137,7 @@ def refine_df(raw_df):
     return final_df
 
 
-# Query: 'tit' for title, 'jhr' for publication year, 'isbn' for, well, the ISBN
-# Concatenate with 'and'
-records = dnb_sru("idn=118500775") #Beethoven: idn=118508288 Bach: idn=11850553X Satzart Entität bbg=Tp* (Pica: Feld 500)
+records = dnb_sru("idn=118508288") #Beethoven: idn=118508288 Bach: idn=11850553X Satzart Entität bbg=Tp* (Pica: Feld 500)
 
 # Parse records
 parsed_records = [record for record in (parse_record(rec) for rec in records) if record is not None]
@@ -147,57 +148,4 @@ else:
     df = refine_df(raw_df)
     pd.set_option('display.max_columns', None)
     print(df)
-
-
-
-### Code Graveyard ###
-
-# =============================================================================
-# def refine_df(raw_df):
-#     def concat_column_data(row, data_column, label_column):
-#         # Retrieve the two columns and ensure they are lists
-#         data = row[data_column]
-#         labels = row[label_column]
-#         
-#         if not isinstance(data, list):
-#             data = [data] if pd.notna(data) else []
-#         if not isinstance(labels, list):
-#             labels = [labels] if pd.notna(labels) else []
-#         
-#         # Ensure both lists have the same length by padding with "N.A."
-#         max_len = max(len(data), len(labels))
-#         data = data + ["N.A."] * (max_len - len(data))
-#         labels = labels + ["N.A."] * (max_len - len(labels))
-#         
-#         # Combine corresponding elements
-#         return [f"{datum} ({label})" for datum, label in zip(data, labels)]
-#     
-#     def extract_locations(row):
-#         # Map "Orte" and "Orte Bezeichnung" into a dictionary
-#         location_mapping = dict(zip(row["Orte Bezeichnung"], row["Orte"]))
-#         
-#         # Extract specific locations
-#         geburtsort = location_mapping.get("Geburtsort", "s.l.")  # Default to "s.l." if not found
-#         sterbeort = location_mapping.get("Sterbeort", "s.l.")   # Default to "s.l." if not found
-#         
-#         # Extract all "Wirkungsort" entries as a list
-#         wirkungsorte = [row["Orte"][i] for i, label in enumerate(row["Orte Bezeichnung"]) if label == "Wirkungsort"]
-#         
-#         return pd.Series({"Geburtsort": geburtsort, "Sterbeort": sterbeort, "Wirkungsorte": wirkungsorte})
-#     
-#     # Apply both functions
-#     raw_df["Zusatzdaten"] = raw_df.apply(concat_column_data, axis=1, args=("Zusatzdaten", "Zusatzdaten Bezeichnung"))
-#     location_columns = raw_df.apply(extract_locations, axis=1)
-#     raw_df = pd.concat([raw_df, location_columns], axis=1)
-#     
-#     # Drop the "Wirkungsdaten Bezeichnung" column (optional)
-#     raw_df.drop(columns=["Zusatzdaten Bezeichnung", "Orte", "Orte Bezeichnung"], inplace=True)
-#         
-#     expanded_df = pd.DataFrame(raw_df["Zusatzdaten"].tolist(), index=raw_df.index)
-#     expanded_df.fillna("N.A.", inplace=True)
-#     expanded_df.columns = [f"Zusatzdaten_{i+1}" for i in range(expanded_df.shape[1])]
-#     final_df = pd.concat([raw_df.drop(columns=["Zusatzdaten"]), expanded_df], axis=1)
-#     
-#     df = final_df
-#     return df
-# =============================================================================
+    
